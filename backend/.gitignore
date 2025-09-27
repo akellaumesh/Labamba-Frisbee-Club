@@ -1,0 +1,7 @@
+# backend/.gitignore
+keys/
+.env
+*.env
+*.pem
+*.key
+*.p12

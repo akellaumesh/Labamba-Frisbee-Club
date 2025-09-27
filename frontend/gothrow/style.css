@@ -1,0 +1,97 @@
+/* ---------- Base ---------- */
+html { scroll-behavior: smooth; }
+
+:root {
+  /* Global tuning knobs */
+  --bg-dim: 0.55;          /* overlay darkness on top of the image */
+  --card-alpha: 0.96;      /* default section opacity */
+  --card-radius: 16px;
+  --card-shadow: 0 12px 35px rgba(0,0,0,.18);
+}
+
+/* Layout / text defaults */
+body {
+  background: none;        /* we render the image on ::before instead */
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #111827;          /* gray-900 */
+}
+
+/* ---------- Background layers ---------- */
+/* Image layer */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background: url('assets/back.png') center center/cover no-repeat fixed;
+  /* soften and darken the photo itself so text stands out */
+  filter: grayscale(40%) saturate(70%) brightness(0.40) blur(6px);
+  transform: scale(1.015);
+}
+
+/* Dim overlay */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: rgba(0,0,0,var(--bg-dim)); /* ~55% black overlay */
+  pointer-events: none;
+}
+
+/* ---------- Content cards ---------- */
+.main-section {
+  background: rgba(255,255,255,var(--card-alpha));
+  backdrop-filter: blur(2px);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  padding: 1rem 1.25rem;
+
+  /* gentle enter transition (your JS toggles display) */
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity .25s ease, transform .25s ease, visibility .25s;
+}
+.main-section[style*="block"] {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* ---------- About: fully solid & crisp ---------- */
+#about {
+  --card-alpha: 1 !important;  /* force solid white */
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 10px 30px rgba(0,0,0,.18);
+  padding: 1.25rem 1.5rem !important;
+}
+
+/* Slightly larger body text inside About for readability */
+#about p,
+#about li {
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+/* Teams list spacing */
+#teamList li { margin-bottom: .25rem; }
+
+/* Links */
+a { color:#2563eb; transition: color .2s; }
+a:hover { color:#1d4ed8; }
+
+/* Sticky nav remains readable */
+.tab-nav {
+  background: rgba(255,255,255,0.95) !important;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+}
+
+/* Accessibility: honor reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  body::before { filter: none; transform: none; }
+  .main-section { transition: none; }
+}

@@ -1,0 +1,15 @@
+# --- Web framework ---
+fastapi==0.112.0
+uvicorn[standard]==0.30.5
+
+# --- Google Sheets API client ---
+google-api-python-client==2.146.0
+google-auth==2.35.0
+google-auth-oauthlib==1.2.1
+google-cloud-storage==2.18.2
+
+
+# --- Optional (recommended for production reliability) ---
+python-dotenv==1.0.1
+python-multipart==0.0.9
+stripe==10.8.0

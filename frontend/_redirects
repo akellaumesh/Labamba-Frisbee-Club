@@ -1,0 +1,15 @@
+# /api/*  https://labamba-backend-459492754349.europe-north1.run.app/:splat  200!
+
+# Serve SPA routes (for /gothrow, /gothrow/photos, etc.)
+/gothrow/*     /gothrow/index.html   200
+
+# Proxy API requests to Cloud Run
+/gothrow/api/*  https://labamba-backend-459492754349.europe-north1.run.app/api/:splat  200
+
+# Optional health or test route
+/gothrow/health https://labamba-backend-459492754349.europe-north1.run.app/health  200
+
+/gothrow/api/pay/*  https://labamba-backend-459492754349.europe-north1.run.app/api/pay/:splat  200
+
+/api/*  https://labamba-backend-459492754349.europe-north1.run.app/api/:splat  200
+/*       /index.html  200
