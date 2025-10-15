@@ -1,0 +1,18 @@
+# Local Netlify folder
+.netlify
+# Python virtual environment
+.venv/
+venv/
+
+# Local environment files
+.env
+*.env
+
+# Service account keys
+backend/keys/
+*.json
+
+# OS / editor junk
+.DS_Store
+__pycache__/
+*.pyc

@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>La Bamba Frisbee Club</title>
+  <meta name="description" content="La Bamba Frisbee Club" />
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Hide all sections by default to avoid flash; JS will show the active one */
+    .main-section { display: none; }
+    .main-section#about { display: block; }
+
+    .tab-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      z-index: 50;
+      background: rgba(255,255,255,0.85);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      padding: 0.5rem 0;
+      backdrop-filter: saturate(1.2) blur(6px);
+    }
+    .tab-nav a {
+      font-weight: 500;
+      color: #222;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      transition: background 0.2s, color 0.2s;
+      text-decoration: none;
+    }
+    .tab-nav a:hover, .tab-nav a.active {
+      background: #2563eb22;
+      color: #2563eb;
+    }
+    body { padding-top: 3.5rem; }
+
+    /* Reduce motion users: disable scroll blur effect that JS applies */
+    @media (prefers-reduced-motion: reduce) {
+      body { filter: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-white/70 text-gray-900 relative">
+  <nav class="tab-nav" aria-label="Site sections">
+    <a href="#about" data-section="about" class="active">About</a>
+    <a href="#teams" data-section="teams">Teams</a>
+    <a href="#registration" data-section="registration">Registration</a>
+    <a href="#photos" data-section="photos">Photos</a>
+    <a href="#live" data-section="live">Live</a>
+    <a href="#payments" data-section="payments">Payments</a>
+  </nav>
+
+    <header class="max-w-6xl mx-auto p-4 flex items-center justify-between mt-4">
+    <div class="flex items-center gap-3">
+        <img src="assets/front.jpg" alt="La Bamba Frisbee Club logo" class="h-10 w-10 rounded-full shadow" />
+        <h1 class="text-2xl font-bold">La Bamba Frisbee Club</h1>
+    </div>
+    </header>
+
+  <main class="max-w-6xl mx-auto p-4 space-y-16">
+    <section id="about" class="main-section scroll-mt-24" aria-labelledby="about-title">
+      <h2 id="about-title" class="text-xl font-semibold mb-3">About</h2>
+      <p class="mb-4">
+        Welcome to <strong>La Bamba Frisbee Club</strong>! We’re thrilled to host the
+        <strong>Gothrow 2026</strong> ultimate tournament in Gothenburg. Expect a full weekend of spirited games,
+        music, and community.
+      </p>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <h3 class="font-semibold mb-1">Key details</h3>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong>Dates:</strong> 17–18 January 2026</li>
+            <li><strong>Venue:</strong> Lundbystrandshallen, Gothenburg (<a class="underline" href="https://maps.google.com/?q=Lundbystrandshallen+Gothenburg" target="_blank" rel="noopener">map</a>)</li>
+            <li><strong>Divisions:</strong> Mixed (5v5)</li>
+            <li><strong>Format:</strong> Swiss-draw into brackets (subject to entries)</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="font-semibold mb-1">Fees & deadlines</h3>
+          <ul class="list-disc pl-5 space-y-1">
+            <li><strong>Team fee:</strong> 3500 SEK</li>
+            <li><strong>Player fee:</strong> 200 SEK</li>
+            <li><strong>Registration closes:</strong> 15 December 2025</li>
+            <li><strong>Payment:</strong> Details sent upon acceptance</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="mt-4 grid sm:grid-cols-2 gap-4">
+        <div>
+          <h3 class="font-semibold mb-1">What’s included</h3>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Water stations & first aid</li>
+            <li>Saturday social & photo booth</li>
+          </ul>
+        </div>
+        <div>
+          <h3 class="font-semibold mb-1">Contact</h3>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Email: <a class="underline" href="mailto:labambafrisbee@gmail.com">labambafrisbee@gmail.com</a></li>
+            <li>Instagram: <a class="underline" href="https://instagram.com" target="_blank" rel="noopener">@labambaultimate</a></li>
+            <li>Questions about teams? Use the <strong>Registration</strong> tab.</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="mt-4 text-sm text-gray-600">
+        We value Spirit of the Game. All experience levels are welcome—please bring your best spirit and great vibes.
+      </p>
+    </section>
+
+    <section id="teams" class="main-section scroll-mt-24" aria-labelledby="teams-title">
+      <h2 id="teams-title" class="text-xl font-semibold mb-2">Teams</h2>
+      <div id="teamCount" class="text-sm opacity-70" aria-live="polite">Loading registrations…</div>
+      <ul id="teamList" class="list-disc pl-5"></ul>
+    </section>
+
+    <section id="registration" class="main-section scroll-mt-24" aria-labelledby="registration-title">
+      <h2 id="registration-title" class="text-xl font-semibold mb-4">Registration</h2>
+      <iframe
+        title="Gothrow 10 Registration Form"
+        src="https://forms.gle/8oNyV3x8YF4XYHTr8"
+        width="100%"
+        height="1300"
+        frameborder="0"
+        marginheight="0"
+        marginwidth="0">Loading…</iframe>
+      <p class="mt-3 text-sm text-gray-600">Registrations are stored securely in Google Sheets via Google Forms.</p>
+    </section>
+
+    <section id="photos" class="main-section scroll-mt-24" aria-labelledby="photos-title">
+      <h2 id="photos-title" class="text-xl font-semibold mb-2">Photos</h2>
+
+      <form id="photoUpload" class="flex items-center gap-3">
+        <input id="photoFile" type="file" accept="image/*" />
+        <button type="submit" class="px-3 py-1 rounded bg-blue-600 text-white">Upload</button>
+        <span id="photoMsg" class="text-sm text-gray-600"></span>
+      </form>
+
+      <div id="photoGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4"></div>
+    </section>
+
+    <section id="live" class="main-section scroll-mt-24" aria-labelledby="live-title">
+      <h2 id="live-title" class="text-xl font-semibold mb-2">Live</h2>
+      <div class="space-y-3">
+        <p>Add your stream or scoreboard here.</p>
+      </div>
+    </section>
+
+  <section id="payments" class="main-section scroll-mt-24" aria-labelledby="payments-title">
+    <h2 id="payments-title" class="text-xl font-semibold mb-4">Payments</h2>
+
+    <!-- Swish block -->
+    <div class="rounded-lg p-4 bg-white/90 shadow mb-6">
+      <h3 class="font-semibold mb-2">Swish</h3>
+      <p class="text-sm text-gray-600 mb-3">
+        Scan the QR with your Swish app, or tap the button to open Swish.
+      </p>
+      <div class="flex items-center gap-6">
+        <div>
+          <canvas id="swishQr" class="rounded shadow"></canvas>
+          <p class="text-xs text-gray-600 mt-2">
+            Payee: <span id="swishPayee"></span><br />
+            Amount: <span id="swishAmount"></span> SEK<br />
+            Message: <span id="swishMsg"></span>
+          </p>
+        </div>
+        <button id="openSwishBtn"
+          class="px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700">
+          Open in Swish
+        </button>
+      </div>
+    </div>
+
+    <!-- Card block -->
+    <div class="rounded-lg p-4 bg-white/90 shadow">
+      <h3 class="font-semibold mb-2">Card (Visa/Mastercard)</h3>
+      <p class="text-sm text-gray-600 mb-3">
+        Pay securely by card via Stripe Checkout.
+      </p>
+      <button id="cardPayBtn"
+        class="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">
+        Pay with Card
+      </button>
+      <p id="cardPayMsg" class="text-sm text-gray-600 mt-2"></p>
+    </div>
+  </section>
+
+  <!-- QRCode library for generating the Swish QR -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+  </main>
+
+  <footer class="max-w-6xl mx-auto p-4 text-sm opacity-70">© La Bamba Frisbee Club</footer>
+
+  <noscript>
+    <div class="max-w-6xl mx-auto p-4 text-sm text-red-700">
+      JavaScript is required to navigate sections and to load team registrations.
+    </div>
+  </noscript>
+
+  <!-- Keep main.js last; it controls tab switching and loads teams -->
+  <script src="main.js?v=8"></script>
+</body>
+</html>
