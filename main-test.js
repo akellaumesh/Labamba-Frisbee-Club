@@ -294,17 +294,12 @@ const PAY_CONFIG = {
 
 // Swish deeplink builder
 function buildSwishUrl({ number, amount, message }) {
-  const payee = String(number || '').replace(/\D/g, '');
-  const amt = String(Number(amount) || 0);
   const params = new URLSearchParams({
-    payee,
-    amount: amt,
-    message: String(message || '')
+    payee: number,
+    amount: String(amount),
+    message,
   });
-  // Log constructed link for debugging
-  const link = `swish://payment?${params.toString()}`;
-  console.log('Swish deeplink:', link);
-  return { link, params: params.toString(), payee, amt };
+  return `swish://payment?${params.toString()}`;
 }
 
 async function initSwishUI() {
@@ -316,60 +311,73 @@ async function initSwishUI() {
   const msgEl = document.getElementById("swishMsg");
   if (!canvas || !btn) return;
 
+  // Show labels
   if (payeeEl) payeeEl.textContent = swishNumber;
   if (amountEl) amountEl.textContent = amountSEK;
   if (msgEl) msgEl.textContent = message;
 
-  const { link, params, payee, amt } = buildSwishUrl({ number: swishNumber, amount: amountSEK, message });
+  const link = buildSwishUrl({ number: swishNumber, amount: amountSEK, message });
 
-  // Generate QR encoding the deeplink (fallback/scan)
-  try {
-    if (window.QRCode && QRCode.toCanvas) {
-      await QRCode.toCanvas(canvas, link, { width: 260, margin: 1 });
+  // Generate QR into canvas if possible (best-effort); otherwise show simple text
+  const ctx = canvas.getContext && canvas.getContext('2d');
+  if (ctx) {
+    try {
+      if (window.QRCode && QRCode.toCanvas) {
+        canvas.width = 260;
+        canvas.height = 260;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        await QRCode.toCanvas(canvas, link, { width: 260, margin: 1 });
+      } else {
+        canvas.width = 420;
+        canvas.height = 120;
+        ctx.fillStyle = '#fff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = '#000'; ctx.font = '14px sans-serif';
+        ctx.fillText('Scan QR or open Swish', 10, 20);
+        ctx.fillText(swishNumber, 10, 50);
+        ctx.fillText(`Amount: ${amountSEK}`, 10, 75);
+      }
+    } catch (e) {
+      console.error('QR generation failed', e);
     }
-  } catch (e) {
-    console.error('QR generation failed', e);
   }
 
+  // Button handler: directly attempt to open Swish via deeplink with robust fallback
   btn.addEventListener("click", async (ev) => {
     ev.preventDefault();
-    console.log('Attempting to open Swish with:', link);
 
-    // Try to open with standard scheme first
-    try {
-      // start fallback timer
-      let fallbackCalled = false;
-      const fallback = () => {
-        if (fallbackCalled) return;
-        fallbackCalled = true;
-        const text = `Swish: ${payee}\nAmount: ${amt} SEK\nMessage: ${message}`;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).catch(()=>{});
-        }
-        alert('Could not open Swish app automatically. Payment details were copied to clipboard. You can paste them into your Swish app or scan the QR code.');
-      };
+    const deeplink = link; // e.g. swish://payment?payee=...&amount=...&message=
+    let fallbackTimer = null;
+    let handled = false;
 
-      const timer = setTimeout(fallback, 1200);
-
-      window.location.href = link;
-
-      try {
-        const intentUrl = `intent://payment?${params}#Intent;scheme=swish;end`;
-        const ifr = document.createElement('iframe');
-        ifr.style.display = 'none';
-        ifr.src = intentUrl;
-        document.body.appendChild(ifr);
-        setTimeout(() => { try { document.body.removeChild(ifr); } catch(e){} }, 1500);
-      } catch (e) { /* ignore */ }
-
-      setTimeout(() => clearTimeout(timer), 1500);
-    } catch (e) {
-      console.error('Deeplink attempt failed', e);
-      const text = `Swish: ${payee}\nAmount: ${amt} SEK\nMessage: ${message}`;
+    const fallback = () => {
+      if (handled) return;
+      handled = true;
+      const text = `Swish: ${swishNumber}\nAmount: ${amountSEK} SEK\nMessage: ${message}`;
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).catch(()=>{});
       }
-      alert('Could not open Swish app. Payment details were copied to clipboard.');
+      alert('Swish did not open automatically. Payment details were copied to your clipboard. You can paste them into your Swish app or scan the QR.');
+    };
+
+    try {
+      // Start fallback timer: if app doesn't open within 1.2s, call fallback
+      fallbackTimer = setTimeout(fallback, 1200);
+
+      // Primary attempt: change location (works on many mobile browsers)
+      window.location.href = deeplink;
+
+      // Secondary attempt for older Android: create hidden iframe
+      try {
+        const ifr = document.createElement('iframe');
+        ifr.style.display = 'none';
+        ifr.src = deeplink;
+        document.body.appendChild(ifr);
+        setTimeout(() => { try { document.body.removeChild(ifr); } catch(e){} }, 1500);
+      } catch (e) { /* ignore */ }
+    } catch (e) {
+      console.error('Deeplink attempt failed', e);
+      clearTimeout(fallbackTimer);
+      fallback();
     }
   });
 }
