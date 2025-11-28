@@ -45,27 +45,30 @@
     @media (prefers-reduced-motion: reduce) {
       body { filter: none !important; }
     }
+
+    /* minimal canvas sizing so layout doesn't jump */
+    #swishQr { width: 220px; height: 220px; display: block; background: #fff; }
   </style>
 </head>
 <body class="bg-white/70 text-gray-900 relative">
-  <nav class="tab-nav" aria-label="Site sections">
-    <a href="#about" data-section="about" class="active">About</a>
-    <a href="#teams" data-section="teams">Teams</a>
-    <a href="#registration" data-section="registration">Registration</a>
-    <a href="#photos" data-section="photos">Photos</a>
-    <a href="#live" data-section="live">Live</a>
-    <a href="#payments" data-section="payments">Payments</a>
+  <nav class="tab-nav" aria-label="Site sections" role="tablist">
+    <a href="#about" data-section="about" class="active" role="tab" aria-selected="true" tabindex="0">About</a>
+    <a href="#teams" data-section="teams" role="tab" aria-selected="false" tabindex="-1">Teams</a>
+    <a href="#registration" data-section="registration" role="tab" aria-selected="false" tabindex="-1">Registration</a>
+    <a href="#photos" data-section="photos" role="tab" aria-selected="false" tabindex="-1">Photos</a>
+    <a href="#live" data-section="live" role="tab" aria-selected="false" tabindex="-1">Live</a>
+    <a href="#payments" data-section="payments" role="tab" aria-selected="false" tabindex="-1">Payments</a>
   </nav>
 
-    <header class="max-w-6xl mx-auto p-4 flex items-center justify-between mt-4">
+  <header class="max-w-6xl mx-auto p-4 flex items-center justify-between mt-4">
     <div class="flex items-center gap-3">
-        <img src="assets/front.jpg" alt="La Bamba Frisbee Club logo" class="h-10 w-10 rounded-full shadow" />
-        <h1 class="text-2xl font-bold">La Bamba Frisbee Club</h1>
+      <img src="assets/front.jpg" alt="La Bamba Frisbee Club logo" class="h-10 w-10 rounded-full shadow" />
+      <h1 class="text-2xl font-bold">La Bamba Frisbee Club</h1>
     </div>
-    </header>
+  </header>
 
   <main class="max-w-6xl mx-auto p-4 space-y-16">
-    <section id="about" class="main-section scroll-mt-24" aria-labelledby="about-title">
+    <section id="about" class="main-section scroll-mt-24" aria-labelledby="about-title" tabindex="-1">
       <h2 id="about-title" class="text-xl font-semibold mb-3">About</h2>
       <p class="mb-4">
         Welcome to <strong>La Bamba Frisbee Club</strong>! We’re thrilled to host the
@@ -103,7 +106,6 @@
             <li>Snacks and warm lunch can be bought at the venue</li>
             <li>Changing rooms and showers available</li>
             <li>There will be juniors tournament will also be part of GoThrow</li>
-            
           </ul>
         </div>
         <div>
@@ -121,13 +123,13 @@
       </p>
     </section>
 
-    <section id="teams" class="main-section scroll-mt-24" aria-labelledby="teams-title">
+    <section id="teams" class="main-section scroll-mt-24" aria-labelledby="teams-title" tabindex="-1">
       <h2 id="teams-title" class="text-xl font-semibold mb-2">Teams</h2>
       <div id="teamCount" class="text-sm opacity-70" aria-live="polite">Loading registrations…</div>
       <ul id="teamList" class="list-disc pl-5"></ul>
     </section>
 
-    <section id="registration" class="main-section scroll-mt-24" aria-labelledby="registration-title">
+    <section id="registration" class="main-section scroll-mt-24" aria-labelledby="registration-title" tabindex="-1">
       <h2 id="registration-title" class="text-xl font-semibold mb-4">Registration</h2>
       <iframe
         title="Gothrow 10 Registration Form"
@@ -140,7 +142,7 @@
       <p class="mt-3 text-sm text-gray-600">Registrations are stored securely in Google Sheets via Google Forms.</p>
     </section>
 
-    <section id="photos" class="main-section scroll-mt-24" aria-labelledby="photos-title">
+    <section id="photos" class="main-section scroll-mt-24" aria-labelledby="photos-title" tabindex="-1">
       <h2 id="photos-title" class="text-xl font-semibold mb-2">Photos</h2>
 
       <form id="photoUpload" class="flex items-center gap-3">
@@ -152,55 +154,51 @@
       <div id="photoGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4"></div>
     </section>
 
-    <section id="live" class="main-section scroll-mt-24" aria-labelledby="live-title">
+    <section id="live" class="main-section scroll-mt-24" aria-labelledby="live-title" tabindex="-1">
       <h2 id="live-title" class="text-xl font-semibold mb-2">Live</h2>
       <div class="space-y-3">
         <p>Add your stream or scoreboard here.</p>
       </div>
     </section>
 
-  <section id="payments" class="main-section scroll-mt-24" aria-labelledby="payments-title">
-    <h2 id="payments-title" class="text-xl font-semibold mb-4">Payments</h2>
+    <section id="payments" class="main-section scroll-mt-24" aria-labelledby="payments-title" tabindex="-1">
+      <h2 id="payments-title" class="text-xl font-semibold mb-4 ">Payments</h2>
 
-    <!-- Swish block -->
-    <div class="rounded-lg p-4 bg-white/90 shadow mb-6">
-      <h3 class="font-semibold mb-2">Swish</h3>
-      <p class="text-sm text-gray-600 mb-3">
-        Scan the QR with your Swish app, or tap the button to open Swish.
-      </p>
-      <div class="flex items-center gap-6">
-        <div>
-          <canvas id="swishQr" class="rounded shadow"></canvas>
-          <p class="text-xs text-gray-600 mt-2">
-            Payee: <span id="swishPayee"></span><br />
-            Amount: <span id="swishAmount"></span> SEK<br />
-            Message: <span id="swishMsg"></span>
-          </p>
+      <!-- Swish block -->
+      <div class="rounded-lg p-4 bg-white/90 shadow mb-6">
+        <h3 class="font-semibold mb-2">Swish</h3>
+        <p class="text-sm text-gray-600 mb-3">
+          Scan the QR with your Swish app, or tap the button to open Swish. If Swish does not open automatically the payment details will be copied to your clipboard.
+        </p>
+        <div class="flex items-center gap-6">
+          <div>
+            <canvas id="swishQr" class="rounded shadow" width="220" height="220" aria-label="Swish QR code"></canvas>
+            <p class="text-xs text-gray-600 mt-2">
+              Payee: <span id="swishPayee"></span><br />
+              Amount: <span id="swishAmount"></span> SEK<br />
+              Message: <span id="swishMsg"></span>
+            </p>
+          </div>
+          <button id="openSwishBtn" type="button"
+            class="px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700">
+            Open in Swish
+          </button>
         </div>
-        <button id="openSwishBtn"
-          class="px-3 py-2 rounded bg-green-600 text-white hover:bg-green-700">
-          Open in Swish
-        </button>
       </div>
-    </div>
 
-    <!-- Card block -->
-    <div class="rounded-lg p-4 bg-white/90 shadow">
-      <h3 class="font-semibold mb-2">Card (Visa/Mastercard)</h3>
-      <p class="text-sm text-gray-600 mb-3">
-        Pay securely by card via Stripe Checkout.
-      </p>
-      <button id="cardPayBtn"
-        class="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">
-        Pay with Card
-      </button>
-      <p id="cardPayMsg" class="text-sm text-gray-600 mt-2"></p>
-    </div>
-  </section>
-
-  <!-- QRCode library for generating the Swish QR -->
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-
+      <!-- Card block -->
+      <div class="rounded-lg p-4 bg-white/90 shadow">
+        <h3 class="font-semibold mb-2">Card (Visa/Mastercard)</h3>
+        <p class="text-sm text-gray-600 mb-3">
+          Pay securely by card via Stripe Checkout.
+        </p>
+        <button id="cardPayBtn" type="button"
+          class="px-3 py-2 rounded bg-blue-600 text-white hover:bg-blue-700">
+          Pay with Card
+        </button>
+        <p id="cardPayMsg" class="text-sm text-gray-600 mt-2"></p>
+      </div>
+    </section>
   </main>
 
   <footer class="max-w-6xl mx-auto p-4 text-sm opacity-70">© La Bamba Frisbee Club</footer>
@@ -210,6 +208,9 @@
       JavaScript is required to navigate sections and to load team registrations.
     </div>
   </noscript>
+
+  <!-- QRCode library for generating the Swish QR (used as fallback if no static image) -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 
   <!-- Keep main.js last; it controls tab switching and loads teams -->
   <script src="main.js?v=8"></script>
