@@ -154,10 +154,157 @@
 
     <section id="live" class="main-section scroll-mt-24" aria-labelledby="live-title">
       <h2 id="live-title" class="text-xl font-semibold mb-2">Live</h2>
-      <div class="space-y-3">
-        <p>Add your stream or scoreboard here.</p>
+      <div class="space-y-4">
+        <div>
+          <h3 class="font-semibold mb-1">Watch Live</h3>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div>
+              <h4 class="font-semibold mb-1">Day 1 Stream</h4>
+              <div class="aspect-w-16 aspect-h-9">
+                <iframe
+                  src="https://www.youtube.com/embed/5nBSbUg32-w?autoplay=0"
+                  title="Day 1 Stream"
+                  allow="autoplay; encrypted-media"
+                  allowfullscreen
+                  class="w-full h-64 rounded shadow"
+                  frameborder="0"></iframe>
+              </div>
+            </div>
+            <div>
+              <h4 class="font-semibold mb-1">Day 2 Stream</h4>
+              <div class="aspect-w-16 aspect-h-9">
+                <iframe
+                  src="https://www.youtube.com/embed/XR6T9Knlxms?autoplay=0"
+                  title="Day 2 Stream"
+                  allow="autoplay; encrypted-media"
+                  allowfullscreen
+                  class="w-full h-64 rounded shadow"
+                  frameborder="0"></iframe>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h3 class="font-semibold mb-1">Scorecard</h3>
+          <form id="scorecardForm" class="overflow-x-auto">
+            <table id="scorecardTable" class="min-w-[320px] border border-gray-300 rounded mb-2">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="px-2 py-1 border">Team 1</th>
+                  <th class="px-2 py-1 border">Score</th>
+                  <th class="px-2 py-1 border">Team 2</th>
+                  <th class="px-2 py-1 border">Score</th>
+                  <th class="px-2 py-1 border"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows will be rendered by JS -->
+              </tbody>
+            </table>
+            <div class="flex gap-2">
+              <button type="button" id="addGameBtn" class="px-2 py-1 bg-green-600 text-white rounded">Add Game</button>
+              <button type="button" id="resetScorecardBtn" class="px-2 py-1 bg-gray-400 text-white rounded">Reset</button>
+            </div>
+          </form>
+          <p class="text-xs text-gray-500 mt-1">Edit team names and scores. Changes are saved in your browser.</p>
+        </div>
       </div>
     </section>
+
+    <script>
+    (function() {
+      const STORAGE_KEY = "scorecardDataV1";
+      const defaultGames = [
+        { team1: "Team A", score1: 0, team2: "Team B", score2: 0 }
+      ];
+
+      function loadGames() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return defaultGames.slice();
+          return JSON.parse(raw);
+        } catch {
+          return defaultGames.slice();
+        }
+      }
+
+      function saveGames(games) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
+      }
+
+      function renderTable(games) {
+        const tbody = document.querySelector("#scorecardTable tbody");
+        tbody.innerHTML = "";
+        games.forEach((game, idx) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td class="border px-2 py-1">
+              <input type="text" class="border rounded px-1 py-0.5 w-24" value="${game.team1}" data-idx="${idx}" data-field="team1" />
+            </td>
+            <td class="border px-2 py-1">
+              <input type="number" min="0" class="border rounded px-1 py-0.5 w-12 text-center" value="${game.score1}" data-idx="${idx}" data-field="score1" />
+            </td>
+            <td class="border px-2 py-1">
+              <input type="text" class="border rounded px-1 py-0.5 w-24" value="${game.team2}" data-idx="${idx}" data-field="team2" />
+            </td>
+            <td class="border px-2 py-1">
+              <input type="number" min="0" class="border rounded px-1 py-0.5 w-12 text-center" value="${game.score2}" data-idx="${idx}" data-field="score2" />
+            </td>
+            <td class="border px-2 py-1 text-center">
+              <button type="button" class="removeGameBtn text-red-600" data-idx="${idx}" title="Remove game">&times;</button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function setupScorecard() {
+        let games = loadGames();
+        renderTable(games);
+
+        // Handle input changes
+        document.getElementById("scorecardTable").addEventListener("input", function(e) {
+          const t = e.target;
+          const idx = Number(t.getAttribute("data-idx"));
+          const field = t.getAttribute("data-field");
+          if (field && games[idx]) {
+            games[idx][field] = field.startsWith("score") ? Number(t.value) : t.value;
+            saveGames(games);
+          }
+        });
+
+        // Remove game
+        document.getElementById("scorecardTable").addEventListener("click", function(e) {
+          if (e.target.classList.contains("removeGameBtn")) {
+            const idx = Number(e.target.getAttribute("data-idx"));
+            games.splice(idx, 1);
+            if (games.length === 0) games.push({ team1: "", score1: 0, team2: "", score2: 0 });
+            saveGames(games);
+            renderTable(games);
+          }
+        });
+
+        // Add game
+        document.getElementById("addGameBtn").addEventListener("click", function() {
+          games.push({ team1: "", score1: 0, team2: "", score2: 0 });
+          saveGames(games);
+          renderTable(games);
+        });
+
+        // Reset
+        document.getElementById("resetScorecardBtn").addEventListener("click", function() {
+          if (confirm("Clear all games and scores?")) {
+            games = defaultGames.slice();
+            saveGames(games);
+            renderTable(games);
+          }
+        });
+      }
+
+      // Wait for DOM
+      document.addEventListener("DOMContentLoaded", setupScorecard);
+    })();
+    </script>
 
   <section id="payments" class="main-section scroll-mt-24" aria-labelledby="payments-title">
     <h2 id="payments-title" class="text-xl font-semibold mb-4">Payments</h2>
@@ -200,6 +347,34 @@
 
   <!-- QRCode library for generating the Swish QR -->
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script>
+    // Example Swish QR code data
+    const swishData = {
+      payee: "1234597274",
+      amount: "2000",
+      msg: "Gothrow 2026 Team Fee"
+    };
+
+    function renderSwishQr() {
+      const canvas = document.getElementById("swishQr");
+      const payeeSpan = document.getElementById("swishPayee");
+      const amountSpan = document.getElementById("swishAmount");
+      const msgSpan = document.getElementById("swishMsg");
+
+      if (canvas && window.QRCode) {
+        // Swish QR format: C1|SWISH|PAYEE|AMOUNT|MESSAGE
+        const qrText = `C1|SWISH|${swishData.payee}|${swishData.amount}|${swishData.msg}`;
+        QRCode.toCanvas(canvas, qrText, { width: 180 }, function (error) {
+          if (error) console.error(error);
+        });
+        payeeSpan.textContent = swishData.payee;
+        amountSpan.textContent = swishData.amount;
+        msgSpan.textContent = swishData.msg;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", renderSwishQr);
+  </script>
 
   </main>
 

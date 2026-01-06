@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 import json, os, time, logging, uuid
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 import stripe
 from pydantic import BaseModel
-
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from urllib.parse import unquote
+from fastapi import FastAPI, UploadFile, File, HTTPException, APIRouter, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from google.oauth2.service_account import Credentials
@@ -38,7 +38,7 @@ app.add_middleware(
         "http://127.0.0.1:8000",
         "http://127.0.0.1:8080",
     ],
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -114,6 +114,57 @@ def sheets_service():
         return build("sheets", "v4", credentials=creds)
 
     raise RuntimeError("No Google credentials provided")
+
+router = APIRouter(prefix="/api")
+
+BUCKET = os.getenv("PHOTOS_BUCKET", "labamba-frisbee-photos")
+storage_client = storage.Client()
+
+def parse_gcs(url: str) -> Optional[tuple[str, str]]:
+    try:
+        if url.startswith("gs://"):
+            _, _, bucket, *rest = url.split("/")
+            return bucket, unquote("/".join(rest))
+        from urllib.parse import urlparse
+        u = urlparse(url)
+        if u.netloc == "storage.googleapis.com":
+            parts = u.path.lstrip("/").split("/")
+            bucket = parts[0]
+            obj = unquote("/".join(parts[1:]))
+            return bucket, obj
+        if u.netloc.endswith(".storage.googleapis.com"):
+            bucket = u.netloc.replace(".storage.googleapis.com", "")
+            obj = unquote(u.path.lstrip("/"))
+            return bucket, obj
+    except:
+        pass
+    return None
+
+async def delete_from_gcs(url: str):
+    parsed = parse_gcs(url)
+    if not parsed:
+        raise HTTPException(status_code=400, detail="Invalid photo URL")
+    bucket, obj = parsed
+    if bucket != BUCKET:
+        raise HTTPException(status_code=400, detail="Bucket mismatch")
+    file = storage_client.bucket(bucket).blob(obj)
+    if not file.exists():
+        raise HTTPException(status_code=404, detail="Object not found")
+    file.delete()
+    return {"ok": True, "url": url}
+
+class DeleteBody(BaseModel):
+    url: str
+
+@router.delete("/photos")
+async def delete_photo(url: str = Query(...)):
+    return await delete_from_gcs(url)
+
+@router.post("/photos/delete")
+async def delete_photo_post(body: DeleteBody):
+    return await delete_from_gcs(body.url)
+
+app.include_router(router)
 
 @app.get("/health")
 async def health() -> Dict[str, Any]:
