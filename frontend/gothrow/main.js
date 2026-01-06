@@ -39,8 +39,7 @@ const isProd =
   location.hostname.endsWith("netlify.app");
 
 const BASE_PATH = isProd ? "/gothrow" : "";      // where the site lives
-const API_BASE  = isProd ? `${BASE_PATH}/api`    // Netlify proxy
-                         : `${CLOUD_RUN}/api`;   // direct to Cloud Run for local dev
+const API_BASE  = isProd ? `${BASE_PATH}/api` : `${CLOUD_RUN}/api`;   // direct to Cloud Run for local dev
 
 /* ================== Helpers ================== */
 const $ = (sel) => document.querySelector(sel);
@@ -216,10 +215,40 @@ async function loadTeamsAndRender() {
   }
 }
 
-/* =========== Photos: list & upload =========== */
+/* =========== Photos: list, delete & upload =========== */
+async function deletePhoto(url) {
+  try {
+    const r = await fetch(`${API_BASE}/photos`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (r.ok) return true;
+    if (r.status !== 405 && r.status !== 404) {
+      throw new Error(`${r.status} ${await r.text()}`);
+    }
+  } catch (_) { /* continue */ }
+
+  try {
+    const r = await fetch(`${API_BASE}/photos?url=${encodeURIComponent(url)}`, { method: 'DELETE' });
+    if (r.ok) return true;
+    if (r.status !== 405 && r.status !== 404) {
+      throw new Error(`${r.status} ${await r.text()}`);
+    }
+  } catch (_) { /* continue */ }
+
+  const r = await fetch(`${API_BASE}/photos/delete`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url }),
+  });
+  if (r.ok) return true;
+  throw new Error(`${r.status} ${await r.text()}`);
+}
+
 async function listPhotos() {
   const grid = document.getElementById('photoGrid');
-  const msg  = document.getElementById('photoMsg');
+  const msg = document.getElementById('photoMsg');
   if (!grid || !msg) return;
 
   grid.innerHTML = '';
@@ -227,69 +256,98 @@ async function listPhotos() {
 
   try {
     const res = await fetch(`${API_BASE}/photos`, { cache: 'no-store' });
-    const txt = await res.text();
-    if (!res.ok) throw new Error(`${res.status} ${txt.slice(0,120)}`);
+    const text = await res.text();
+    if (!res.ok) throw new Error(`${res.status} ${text.slice(0, 150)}`);
 
     let data;
-    try { data = JSON.parse(txt); }
-    catch { throw new Error(`Bad JSON: ${txt.slice(0,120)}`); }
+    try { data = JSON.parse(text); }
+    catch { throw new Error(`Bad JSON: ${text.slice(0, 150)}`); }
 
     const photos = data.photos || [];
-    photos.forEach(url => {
+    if (!photos.length) {
+      msg.textContent = 'No photos yet.';
+      return;
+    }
+    msg.textContent = '';
+
+    photos.forEach((url) => {
+      const card = document.createElement('div');
+      card.className = 'relative group';
+
       const a = document.createElement('a');
       a.href = url; a.target = '_blank'; a.rel = 'noopener';
-      a.className = 'block group';
-
       const img = document.createElement('img');
-      img.src = url;
-      img.alt = 'Gothrow photo';
-      img.loading = 'lazy';
-      img.className = 'rounded shadow transition-transform group-hover:scale-[1.02] cursor-zoom-in';
-
+      img.src = url; img.alt = 'Photo'; img.loading = 'lazy';
+      img.className = 'rounded shadow w-full h-auto';
       a.appendChild(img);
-      grid.appendChild(a);
-    });
+      card.appendChild(a);
 
-    msg.textContent = photos.length ? '' : 'No photos yet.';
-  } catch (e) {
-    msg.textContent = `List failed: ${e.message || e}`;
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.title = 'Delete photo';
+      del.textContent = '✕';
+      del.className = 'absolute top-2 right-2 bg-red-600 text-white w-7 h-7 rounded-full flex items-center justify-center opacity-80 hover:opacity-100';
+      del.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (!confirm('Delete this photo?')) return;
+        del.disabled = true;
+        try {
+          await deletePhoto(url);
+          card.remove();
+        } catch (err) {
+          alert(`Failed to delete photo: ${err.message || err}`);
+          del.disabled = false;
+        }
+      });
+      card.appendChild(del);
+
+      grid.appendChild(card);
+    });
+  } catch (err) {
+    msg.textContent = `List failed: ${err.message || err}`;
   }
 }
 
-function initPhotoUpload() {
-  const form  = document.getElementById('photoUpload');
-  const fileEl= document.getElementById('photoFile');
-  const msg   = document.getElementById('photoMsg');
-  if (!form || !fileEl || !msg) return;
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (!fileEl.files?.length) { msg.textContent = 'Choose an image'; return; }
-    const fd = new FormData();
-    fd.append('file', fileEl.files[0]); // field name must be 'file'
-    msg.textContent = 'Uploading…';
-
-    try {
-      const res = await fetch(`${API_BASE}/photos`, { method: 'POST', body: fd });
-      const txt = await res.text();
-      if (!res.ok) throw new Error(`${res.status} ${txt.slice(0,120)}`);
-      const data = JSON.parse(txt);
-      if (!data.ok) throw new Error(data.detail || 'Upload failed');
-
-      msg.textContent = 'Uploaded!';
-      fileEl.value = '';
-      await listPhotos();
-    } catch (err) {
-      msg.textContent = `Upload failed: ${err.message || err}`;
-    }
-  });
+async function uploadPhoto(file) {
+  const msg = document.getElementById('photoMsg');
+  msg.textContent = 'Uploading…';
+  try {
+    const form = new FormData();
+    form.append('file', file);
+    const res = await fetch(`${API_BASE}/photos`, { method: 'POST', body: form });
+    const text = await res.text();
+    if (!res.ok) throw new Error(`${res.status} ${text.slice(0, 150)}`);
+    await listPhotos();
+    msg.textContent = 'Uploaded.';
+  } catch (e) {
+    msg.textContent = `Upload failed: ${e.message || e}`;
+  }
 }
+
+function initPhotosUI() {
+  const form = document.getElementById('photoUpload');
+  const input = document.getElementById('photoFile');
+  if (!form || !input) return;
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    if (!input.files || !input.files[0]) return;
+    uploadPhoto(input.files[0]);
+  });
+
+  listPhotos();
+}
+
+// Kick off when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  initPhotosUI();
+});
 
 // === Payments CONFIG ===
 // Set these values for your event
 const PAY_CONFIG = {
   swishNumber: "1234597274",        // your Swish merchant/number
-  amountSEK: 3500,                   // ticket/fee amount (SEK)
+  amountSEK: 2000,                   // ticket/fee amount (SEK)
   message: "Gothrow-2026-TEAMNAME-", // what shows in the payment
   // Stripe (card) – publishable key is safe to embed in FE
   stripePublishableKey: "pk_live_xxx_or_pk_test_xxx",
@@ -412,12 +470,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
       if (sectionId === 'teams')  loadTeamsAndRender();
       if (sectionId === 'photos') listPhotos();
+      if (sectionId === 'payments') whenPaymentsShown(sectionId);
     });
   });
 
   // Initial loads
   loadTeamsAndRender();
-  initPhotoUpload();
+  initPhotosUI();
   listPhotos();
 
   if (CONFIG.REFRESH_MS > 0) setInterval(loadTeamsAndRender, CONFIG.REFRESH_MS);
